@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RC Wallet - Ultimate</title>
+    
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlJDIFdhbGxldCIsCiAgInNob3J0X25hbWUiOiAiUkMgUGF5IiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwYjExMjAiLAogICJ0aGVtZV9jb2xvciIjogIiM0ZjQ2ZTUiLAogICJpY29ucyI6IFtdCn0=">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --accent: #0ea5e9;
+            
+            /* DARK MODE (DEFAULT) */
+            --bg: #0f172a;
+            --text: #ffffff;
+            --card-bg: #e2e8f0; /* White/Bright Card in Dark Mode */
+            --card-text: #0f172a;
+            --snow-color: white;
+            --glass: rgba(255, 255, 255, 0.1);
+            --nav-bg: #1e293b;
+        }
+
+        /* LIGHT MODE */
+        body.light-mode {
+            --bg: #f8fafc;
+            --text: #0f172a;
+            --card-bg: #1e293b; /* Dark Card in Light Mode */
+            --card-text: #ffffff;
+            --snow-color: black;
+            --glass: rgba(0, 0, 0, 0.05);
+            --nav-bg: #ffffff;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Urbanist', sans-serif; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; justify-content:center; transition: 0.3s; }
+
+        /* SNOWFALL */
+        .snow-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; opacity: 0.4; }
+        .flake { position: absolute; background: var(--snow-color); border-radius: 50%; animation: fall linear infinite; }
+        @keyframes fall { to { transform: translateY(110vh); } }
+
+        .app { width:100%; max-width:480px; height:100%; position:relative; z-index: 5; display: flex; flex-direction: column; background: var(--bg); transition: 0.3s; }
+
+        /* SCREENS */
+        .screen { position:absolute; top:0; left:0; width:100%; height:100%; padding:20px; display:none; flex-direction:column; padding-bottom: 80px; /* Space for Hotbar */ overflow-y: auto; }
+        .active { display:flex; }
+
+        /* LOGIN/REGISTER */
+        .glass-box { background:var(--glass); backdrop-filter:blur(20px); border:1px solid rgba(128,128,128,0.2); border-radius:24px; padding:30px 20px; margin: auto 0; }
+        .field { width:100%; padding:15px; background:rgba(128,128,128,0.1); border:1px solid rgba(128,128,128,0.2); border-radius:12px; color:var(--text); outline:none; margin-bottom:12px; }
+        .btn { width:100%; padding:15px; background:linear-gradient(135deg, var(--primary), var(--accent)); border:none; border-radius:12px; color:white; font-weight:700; margin-top:10px; cursor:pointer; }
+
+        /* DASHBOARD HEADER */
+        .dash-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; }
+        .theme-btn { width: 35px; height: 35px; border-radius: 50%; border: 1px solid rgba(128,128,128,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        /* --- SLIDER (HOME) --- */
+        .slider-box {
+            width: 100%; height: 160px; background: var(--glass);
+            border-radius: 16px; margin-bottom: 20px; overflow: hidden; position: relative;
+        }
+        .slide { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .slide.active-slide { display: block; animation: fade 1s; }
+        @keyframes fade { from {opacity: 0.4} to {opacity: 1} }
+
+        /* --- RC CARD (COMPACT & THEMED) --- */
+        .rc-card-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        .rc-card {
+            width: 100%; max-width: 320px; height: 180px;
+            background: linear-gradient(135deg, var(--card-bg), #64748b);
+            color: var(--card-text);
+            border-radius: 16px; padding: 20px;
+            position: relative; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 1px solid rgba(128,128,128,0.2);
+            transition: 0.3s;
+        }
+        .chip { width: 40px; height: 30px; background: linear-gradient(135deg, #fbbf24, #d97706); border-radius: 6px; margin-bottom: 20px; }
+        .card-num { 
+            font-family: 'Share Tech Mono', monospace; font-size: 18px; letter-spacing: 2px; 
+            margin-bottom: 25px; cursor: pointer; text-align: center; font-weight: bold;
+        }
+        .card-footer { display: flex; justify-content: space-between; align-items: flex-end; }
+        .brand { font-weight: 800; font-style: italic; font-size: 18px; opacity: 0.7; }
+
+        /* MENU GRID */
+        .menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        .menu-item { background: var(--glass); padding: 15px 5px; border-radius: 12px; text-align: center; cursor: pointer; }
+        .menu-icon { font-size: 20px; color: var(--accent); margin-bottom: 5px; }
+        .menu-text { font-size: 10px; }
+
+        /* HOT BAR (BOTTOM NAV) */
+        .hot-bar {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 70px;
+            background: var(--nav-bg); border-top: 1px solid rgba(128,128,128,0.1);
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 20; box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+        .nav-item { text-align: center; color: var(--text); opacity: 0.5; cursor: pointer; transition: 0.2s; }
+        .nav-item.nav-active { opacity: 1; transform: translateY(-5px); color: var(--accent); }
+        .nav-icon { font-size: 24px; margin-bottom: 2px; }
+        .nav-label { font-size: 10px; font-weight: bold; }
+
+        /* MODALS */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 10px 20px; border-radius: 30px; font-size: 12px; opacity: 0; transition: 0.3s; z-index: 200; pointer-events: none; width: max-content; }
+        .err { background: #ef4444 !important; }
+
+        .loader { width: 20px; height: 20px; border: 2px solid #fff; border-bottom-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; margin: 0 auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <div class="snow-container" id="snow"></div>
+
+        <!-- LOGIN -->
+        <div id="login-screen" class="screen active">
+            <div class="glass-box">
+                <h2 style="text-align: center; margin-bottom: 20px;">RC Wallet</h2>
+                <input type="email" id="l-email" class="field" placeholder="Email">
+                <input type="password" id="l-pass" class="field" placeholder="Password">
+                <button class="btn" onclick="playSound(); login()">LOGIN <div class="loader" id="l-load"></div></button>
+                <p style="text-align: center; margin-top: 15px; font-size: 12px; cursor: pointer;" onclick="nav('register-screen')">Create Account</p>
+            </div>
+        </div>
+
+        <!-- REGISTER -->
+        <div id="register-screen" class="screen">
+            <div class="glass-box">
+                <h2 style="text-align: center; margin-bottom: 20px;">Register</h2>
+                <input type="text" id="r-name" class="field" placeholder="Full Name">
+                <input type="tel" id="r-phone" class="field" placeholder="Phone">
+                <input type="email" id="r-email" class="field" placeholder="Email">
+                <input type="password" id="r-pass" class="field" placeholder="Password">
+                <button class="btn" onclick="playSound(); register()">REGISTER <div class="loader" id="r-load"></div></button>
+                <p style="text-align: center; margin-top: 15px; font-size: 12px; cursor: pointer;" onclick="nav('login-screen')">Back to Login</p>
+            </div>
+        </div>
+
+        <!-- DASHBOARD (Wrapper for Tabs) -->
+        <div id="dashboard" style="display: none; width: 100%; height: 100%;">
+            
+            <!-- TAB 1: HOME -->
+            <div id="tab-home" class="screen" style="display: flex;">
+                <div class="dash-head">
+                    <h2 id="u-name">User</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="theme-btn" onclick="toggleTheme()"><i class="fas fa-adjust"></i></div>
+                        <div class="theme-btn" onclick="logout()" style="border-color: #ef4444; color: #ef4444;"><i class="fas fa-power-off"></i></div>
+                    </div>
+                </div>
+
+                <!-- SLIDER -->
+                <div class="slider-box">
+                    <!-- Placeholder Images (Admin will update later) -->
+                    <img class="slide active-slide" src="https://via.placeholder.com/400x160/4f46e5/ffffff?text=Offer+1" alt="Offer">
+                    <img class="slide" src="https://via.placeholder.com/400x160/0ea5e9/ffffff?text=Welcome+Bonus" alt="Offer">
+                    <img class="slide" src="https://via.placeholder.com/400x160/10b981/ffffff?text=Cashback" alt="Offer">
+                </div>
+
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <p style="font-size: 12px; opacity: 0.7;">Total Balance</p>
+                    <h1 style="font-size: 32px;"><span style="color:#facc15">RC</span> <span id="bal">0.00</span></h1>
+                </div>
+
+                <!-- MENU -->
+                <div class="menu-grid">
+                    <div class="menu-item" onclick="playSound(); openSendModal()">
+                        <div class="menu-icon"><i class="fas fa-paper-plane"></i></div>
+                        <div class="menu-text">Send</div>
+                    </div>
+                    <div class="menu-item" onclick="playSound(); openScanner()">
+                        <div class="menu-icon"><i class="fas fa-qrcode"></i></div>
+                        <div class="menu-text">Scan</div>
+                    </div>
+                    <div class="menu-item" onclick="playSound(); showMyQR()">
+                        <div class="menu-icon"><i class="fas fa-barcode"></i></div>
+                        <div class="menu-text">My QR</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="menu-icon"><i class="fas fa-history"></i></div>
+                        <div class="menu-text">History</div>
+                    </div>
+                </div>
+
+                <!-- RECENT HISTORY -->
+                <div>
+                    <h4 style="margin-bottom: 10px; font-size: 14px;">Recent Activity</h4>
+                    <div id="history-list" style="font-size: 12px; opacity: 0.7;">Loading...</div>
+                </div>
+            </div>
+
+            <!-- TAB 2: RC CARD -->
+            <div id="tab-card" class="screen">
+                <div class="rc-card-container">
+                    <div class="rc-card">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div class="chip"></div>
+                            <i class="fas fa-wifi" style="transform: rotate(90deg); font-size: 24px;"></i>
+                        </div>
+                        
+                        <div class="card-num" id="card-display" onclick="playSound(); toggleCard()">
+                            XXXX-XXXX-XXXX
+                        </div>
+                        <div style="font-size: 10px; text-align: center; margin-top: -15px; margin-bottom: 20px; opacity: 0.7;">TAP TO VIEW SECURE ID</div>
+
+                        <div class="card-footer">
+                            <div>
+                                <div style="font-size: 8px; opacity: 0.7;">HOLDER</div>
+                                <div style="font-size: 14px; font-weight: bold;" id="c-holder">NAME</div>
+                            </div>
+                            <div class="brand">RC CARD</div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 20px; font-size: 12px; opacity: 0.6; text-align: center;">This is your secure virtual ID.</p>
+                </div>
+            </div>
+
+            <!-- HOT BAR -->
+            <div class="hot-bar">
+                <div class="nav-item nav-active" onclick="switchTab('home', this)">
+                    <div class="nav-icon"><i class="fas fa-home"></i></div>
+                    <div class="nav-label">Home</div>
+                </div>
+                <div class="nav-item" onclick="switchTab('card', this)">
+                    <div class="nav-icon"><i class="far fa-credit-card"></i></div>
+                    <div class="nav-label">RC Card</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- MODALS -->
+        <div id="send-modal" class="modal">
+            <div class="glass-box" style="width: 100%; max-width: 350px;">
+                <h3>Send Money</h3>
+                <input type="tel" id="s-phone" class="field" placeholder="Receiver Phone">
+                <input type="number" id="s-amount" class="field" placeholder="Amount (RC)">
+                <button class="btn" onclick="sendMoney()">CONFIRM</button>
+                <button class="btn" onclick="document.getElementById('send-modal').style.display='none'" style="background:transparent; border:1px solid #777;">CANCEL</button>
+            </div>
+        </div>
+
+        <div id="qr-modal" class="modal">
+            <div style="background: white; padding: 20px; border-radius: 15px; text-align: center; position: relative;">
+                <i class="fas fa-times" onclick="document.getElementById('qr-modal').style.display='none'" style="position: absolute; right: 10px; top: 10px; color: black; cursor: pointer;"></i>
+                <img id="qr-img" src="" width="180">
+                <p style="color: black; margin-top: 5px;" id="qr-phone"></p>
+            </div>
+        </div>
+
+        <div id="scan-modal" class="modal">
+            <i class="fas fa-times" onclick="stopScanner()" style="position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer;"></i>
+            <div id="reader" style="width: 300px; border: 2px solid var(--accent);"></div>
+        </div>
+
+        <div id="toast">Msg</div>
+    </div>
+
+    <!-- FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBz643NOFN6bZsLC8Z5SbLE3LAEvbz5Q9k",
+            authDomain: "rc-wallet-6a410.firebaseapp.com",
+            projectId: "rc-wallet-6a410",
+            storageBucket: "rc-wallet-6a410.firebasestorage.app",
+            messagingSenderId: "650409149510",
+            appId: "1:650409149510:web:4284280db56b18c18d7647"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let userData = null;
+        let html5QrcodeScanner = null;
+        let snowInterval;
+
+        // --- SOUND ---
+        window.playSound = () => {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 600; 
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.1);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.1);
+        }
+
+        // --- UI LOGIC ---
+        window.nav = (id) => {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            document.getElementById(id).style.display = 'flex';
+            if(id === 'dashboard') {
+                document.getElementById('dashboard').style.display = 'block';
+                switchTab('home', document.querySelector('.nav-item')); // Default to home
+            }
+        }
+
+        window.switchTab = (tab, el) => {
+            playSound();
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
+            el.classList.add('nav-active');
+            
+            document.getElementById('tab-home').style.display = tab === 'home' ? 'block' : 'none';
+            document.getElementById('tab-card').style.display = tab === 'card' ? 'flex' : 'none';
+        }
+
+        window.toggleTheme = () => {
+            document.body.classList.toggle('light-mode');
+            createSnow(); // Refresh snow color
+        }
+
+        window.toast = (msg, err=false) => {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.className = err ? 'err' : '';
+            t.style.opacity = '1'; t.style.bottom = '90px';
+            setTimeout(() => { t.style.opacity = '0'; }, 3000);
+        }
+
+        // SNOWFALL
+        function createSnow() {
+            const c = document.getElementById('snow');
+            c.innerHTML = '';
+            for(let i=0; i<30; i++) {
+                const f = document.createElement('div');
+                f.className = 'flake';
+                f.style.left = Math.random() * 100 + '%';
+                f.style.width = Math.random() * 4 + 2 + 'px';
+                f.style.height = f.style.width;
+                f.style.animationDuration = Math.random() * 3 + 2 + 's';
+                f.style.opacity = Math.random() * 0.5 + 0.2;
+                c.appendChild(f);
+            }
+        }
+        createSnow();
+
+        // SLIDER
+        let slideIndex = 0;
+        setInterval(() => {
+            const slides = document.getElementsByClassName("slide");
+            for (let i = 0; i < slides.length; i++) slides[i].classList.remove('active-slide');
+            slideIndex++;
+            if (slideIndex > slides.length) slideIndex = 1;
+            slides[slideIndex - 1].classList.add('active-slide');
+        }, 3000);
+
+        // --- AUTH ---
+        window.register = async () => {
+            const name = document.getElementById('r-name').value;
+            const phone = document.getElementById('r-phone').value;
+            const email = document.getElementById('r-email').value;
+            const pass = document.getElementById('r-pass').value;
+            const btn = document.getElementById('r-load');
+            
+            if(!name || !phone || !email || !pass) return toast("Empty Fields", true);
+            btn.style.display = 'block';
+
+            try {
+                // 1. Check Phone (Now Allowed by Rules)
+                const q = query(collection(db, "users"), where("phone", "==", phone));
+                const snap = await getDocs(q);
+                if(!snap.empty) throw new Error("Phone Taken");
+
+                // 2. Auth
+                const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                
+                // 3. SECURE CARD GEN (12 Digit Random)
+                const p1 = Math.floor(1000 + Math.random() * 9000);
+                const p2 = Math.floor(1000 + Math.random() * 9000);
+                const p3 = Math.floor(1000 + Math.random() * 9000);
+                const secureCard = `RC-${p1}-${p2}-${p3}`;
+
+                // 4. Save
+                await setDoc(doc(db, "users", cred.user.uid), {
+                    name, phone, email, balance: 50,
+                    card: { number: secureCard },
+                    history: [{type:'Welcome', amount:50}]
+                });
+                toast("Success! +50 RC");
+            } catch (err) {
+                toast(err.message, true);
+            }
+            btn.style.display = 'none';
+        }
+
+        window.login = async () => {
+            const email = document.getElementById('l-email').value;
+            const pass = document.getElementById('l-pass').value;
+            const btn = document.getElementById('l-load');
+            btn.style.display = 'block';
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) {
+                toast("Login Failed", true);
+            }
+            btn.style.display = 'none';
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if(user) {
+                const snap = await getDoc(doc(db, "users", user.uid));
+                if(snap.exists()) {
+                    userData = snap.data();
+                    
+                    if(!userData.card) userData.card = { number: "RC-0000-0000-0000" };
+
+                    document.getElementById('u-name').innerText = userData.name;
+                    document.getElementById('c-holder').innerText = userData.name;
+                    document.getElementById('bal').innerText = userData.balance.toFixed(2);
+                    
+                    // HISTORY
+                    const list = document.getElementById('history-list');
+                    list.innerHTML = '';
+                    const h = userData.history || [];
+                    h.slice().reverse().slice(0,5).forEach(i => {
+                        const col = i.amount > 0 ? '#22c55e' : '#ef4444';
+                        list.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; background:var(--glass); padding:8px; border-radius:8px;">
+                            <span>${i.type}</span><span style="color:${col}; font-weight:bold;">${i.amount}</span>
+                        </div>`;
+                    });
+
+                    nav('dashboard');
+                }
+            } else {
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('register-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'none';
+            }
+        });
+
+        window.logout = () => signOut(auth);
+
+        // --- CARD TOGGLE ---
+        window.toggleCard = () => {
+            const d = document.getElementById('card-display');
+            if(!userData) return;
+            d.innerText = userData.card.number;
+            setTimeout(() => { d.innerText = "XXXX-XXXX-XXXX"; }, 3000);
+        }
+
+        // --- SEND MONEY (UPDATED LOGIC) ---
+        window.sendMoney = async () => {
+            const phone = document.getElementById('s-phone').value;
+            const amount = parseFloat(document.getElementById('s-amount').value);
+            
+            if(!phone || !amount) return toast("Invalid", true);
+            if(amount > userData.balance) return toast("Low Balance", true);
+            if(phone === userData.phone) return toast("Self Send Error", true);
+
+            try {
+                const q = query(collection(db, "users"), where("phone", "==", phone));
+                const snap = await getDocs(q);
+                if(snap.empty) throw new Error("Receiver Not Found");
+
+                const rRef = snap.docs[0].ref;
+                const sRef = doc(db, "users", auth.currentUser.uid);
+
+                // Update SENDER
+                await updateDoc(sRef, { 
+                    balance: increment(-amount),
+                    history: arrayUnion({ type: 'Sent to '+phone, amount: -amount })
+                });
+
+                // Update RECEIVER
+                await updateDoc(rRef, { 
+                    balance: increment(amount),
+                    history: arrayUnion({ type: 'From '+userData.phone, amount: amount })
+                });
+
+                toast("Sent Successfully!");
+                document.getElementById('send-modal').style.display = 'none';
+                
+                // Force Update UI
+                const newSnap = await getDoc(sRef);
+                userData = newSnap.data();
+                document.getElementById('bal').innerText = userData.balance.toFixed(2);
+
+            } catch (err) {
+                toast(err.message, true);
+            }
+        }
+
+        // --- QR ---
+        window.showMyQR = () => {
+            document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200&data=${userData.phone}`;
+            document.getElementById('qr-phone').innerText = userData.phone;
+            document.getElementById('qr-modal').style.display = 'flex';
+        }
+
+        window.openSendModal = () => document.getElementById('send-modal').style.display = 'flex';
+        
+        window.openScanner = () => {
+            document.getElementById('scan-modal').style.display = 'flex';
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+            html5QrcodeScanner.render((txt) => {
+                stopScanner();
+                document.getElementById('send-modal').style.display = 'flex';
+                document.getElementById('s-phone').value = txt;
+                toast("Scanned!");
+            });
+        }
+        window.stopScanner = () => {
+            if(html5QrcodeScanner) html5QrcodeScanner.clear();
+            document.getElementById('scan-modal').style.display = 'none';
+        }
+
+    </script>
+</body>
+</html>
